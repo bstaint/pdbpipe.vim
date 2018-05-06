@@ -10,8 +10,14 @@ fun! s:escape_path()
     return substitute(expand('%:p'), '\', '\\\\', 'g')
 endfunction
 
+fun! s:enable_startup()
+    return pyxeval('pipe is not None')
+endfunction
+
 fun! pdbpipe#startup() abort
-    exe "pyx pipe = pdbpipe.Pdbpipe('".s:escape_path()."')"
+    if !s:enable_startup()
+        exe "pyx pipe = pdbpipe.Pdbpipe('".s:escape_path()."')"
+    endif
 endfunction
 
 fun! pdbpipe#quit() "{{{
@@ -29,6 +35,7 @@ fun! pdbpipe#continue() abort
 endfunction
 
 fun! pdbpipe#breakpoint() abort
+    if !s:enable_startup() | return | endif
     let lines = pyxeval("pipe.breakpoint('".s:escape_path()."',".line('.').")")
     if lines[0] != "" && lines[1] != 0
         exe ":sign place 110 line=".lines[1]." name=breakpoint file=".lines[0]
@@ -42,6 +49,7 @@ fun! pdbpipe#step() abort
 endfunction
 
 fun! pdbpipe#run(op) abort
+    if !s:enable_startup() | return | endif
     let lines = pyxeval('pipe.'.a:op.'()')
     if lines[0] != "" && lines[1] != 0
         sign unplace 111
