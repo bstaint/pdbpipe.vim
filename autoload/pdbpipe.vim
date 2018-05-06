@@ -47,6 +47,7 @@ fun! pdbpipe#run(op) abort
         sign unplace 111
         exe ":drop ".lines[0]
         exe ":normal ".lines[1]."G"
+        exe ":normal zz"
         exe ":sign place 111 line=".lines[1]." name=current_line file=" . lines[0]
     else
         call pdbpipe#quit()
