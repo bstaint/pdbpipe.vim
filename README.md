@@ -4,11 +4,11 @@ experimental debugging python vim plugin
 ### Mapping
 
 ```
- <leader>dt:  Startup debug.
- <leader>db:  toggle Breakpoint current line.
- <leader>dr:  Continue.
- <leader>ds:  Step.
- <leader>dn:   Next.
+ <leader>7:  Startup debug.
+ <leader>9:  toggle Breakpoint current line.
+ <leader>5:  Continue.
+ <leader>3:  Step.
+ <leader>4:   Next.
 ```
 
 
