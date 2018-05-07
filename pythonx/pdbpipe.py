@@ -12,7 +12,7 @@ class Pdbpipe(object):
     RE_NEXT = re.compile('[>|\s]\s*([^\(].+)\((\d{1,})\)')
     
     def __init__(self, file):
-        self._breakpoints = {}
+        self._breakpoints = []
         self._queue = Queue.Queue()
         self._process = subprocess.Popen(['python3', '-m', 'pdb', file],
                                          stdout=subprocess.PIPE,
@@ -59,22 +59,20 @@ class Pdbpipe(object):
         return (r.group(1), r.group(2))
 
     def breakpoint(self, file, line):
-        file = os.path.normcase(os.path.normpath(file))
-        for k,v in self._breakpoints.items():
-            if v == (file, str(line)):
-                self.execute(('clear %d\n' % line).encode('utf-8'))
-                del self._breakpoints[k]
+        bp = (os.path.normcase(os.path.normpath(file)), line)
+        for i, param in enumerate(self._breakpoints):
+            if bp == param:
+                self.execute(('clear {}\n'.format(i+1)).encode('utf-8'))
+                del self._breakpoints[i]
                 return ('', -1)
-                
-        output = self.execute(('b %d\n' % line).encode('utf-8'))        
-        output = output[0]
-        if output == b'(Pdb) *** Blank or comment':
-            return ('', 0)
 
-        r = self.RE_BREAKPOINT.search(output.decode('utf-8'))
-        bp = tuple(r.group(2).rsplit(':', 1))
-        self._breakpoints[r.group(1)] = bp
-        return bp
+        output = self.execute(('b {}:{}\n'.format(file, line)).encode('utf-8'))[0]
+        if output != b'(Pdb) *** Blank or comment':
+            r = self.RE_BREAKPOINT.search(output.decode('utf-8'))
+            if r is not None:
+                self._breakpoints.append(bp)
+                return bp
+        return ('', 0)
         
     def next(self):
         self.execute(b'n\n')
