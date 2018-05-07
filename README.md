@@ -4,11 +4,11 @@ experimental debugging python vim plugin
 ### Mapping
 
 ```
- <leader>7:  Startup debug.
- <leader>9:  toggle Breakpoint current line.
- <leader>5:  Continue.
+ F8:  toggle debug mode.
+ F9:  toggle Breakpoint current line.
  <leader>3:  Step.
  <leader>4:   Next.
+ <leader>5:  Continue.
 ```
 
 
