@@ -46,7 +46,7 @@ class PdbDebug(object):
             if bp == param:
                 self._pipe.execute(b'clear %d\n' % (i+1))
                 del self._breakpoints[i]
-                return -1
+                return -i
 
         stdout,_ = self._pipe.execute(b'b %s:%d\n' % bp)
         if stdout[0] != b'(Pdb) *** Blank or comment':

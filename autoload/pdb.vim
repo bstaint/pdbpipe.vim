@@ -6,6 +6,9 @@ sign define current_line linehl=CurrentLine text=>>
 pyx import pdb_debug
 pyx pipe = None
 
+let s:signid = 120
+let s:breakpoints = []
+
 fun! s:escape_path()
     return substitute(expand('%:p'), '\', '\\\\', 'g')
 endfunction
@@ -23,6 +26,8 @@ endfunction
 fun! pdb#toggle() abort
     if !s:enable_startup()
         exe "pyx pipe = pdb_debug.PdbDebug('".s:escape_path()."')"
+        let s:signid = 120
+        let s:breakpoints = []
     else
         call pdb#quit()
     endif
@@ -31,10 +36,13 @@ endfunction
 fun! pdb#breakpoint() abort
     if !s:enable_startup() | return | endif
     let lines = pyxeval("pipe.breakpoint('".s:escape_path()."',".line('.').")")
-    if lines[0] != "" && lines[1] > 0
-        exe ":sign place 110 line=".lines[1]." name=breakpoint file=".lines[0]
-    elseif lines[1] == -1
-        exe ":sign unplace"
+    if lines[1] > 0
+        silent exe ":sign place ".s:signid." line=".lines[1]." name=breakpoint file=".lines[0]
+        call add(s:breakpoints, s:signid)
+        let s:signid += 1        
+    else
+        let id = remove(s:breakpoints, lines[1])
+        silent exe ":sign unplace ".id." file=".lines[0]
     endif
 endfunction
 
@@ -47,10 +55,11 @@ fun! pdb#run(op) abort
         endif
         
         sign unplace 111
-        exe ":drop ".lines[0]." | normal ".lines[1]."G | normal zz"
+        silent exec ":drop ".lines[0]." | normal ".lines[1]."G"
+        silent exec 'normal! zz'
         exe ":sign place 111 line=".lines[1]." name=current_line file=" . lines[0]
     else
-				call pdb#exit()
+				call pdb#quit()
     endif
 endfunction
 
