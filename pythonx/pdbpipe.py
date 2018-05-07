@@ -86,13 +86,20 @@ class Pdbpipe(object):
         self.execute(b's\n')
         return self._parseWhere()
 
-    def print(self, var):
+    def _pprint(self, var):
         output = self.execute(b'pp %s\n' % var)[0]
-        return output.decode('utf-8').split('(Pdb) ')[1]
+        return output.split(b'(Pdb) ')[1]
+        
+    def pprint(self, var : str) -> str:
+        var_bytes = var.encode('utf-8')
+        line = self._pprint(b"hasattr(%s, '__dict__')" % var_bytes)
+        data = self._pprint(var_bytes + b'.__dict__' if line == b'True' else var_bytes)
+        typ = self._pprint(b"type(%s)" % var_bytes)
+        return (b'%s = %s %s' % (var_bytes, data, typ)).decode('utf-8')
 
 
 if __name__ == "__main__":
-    import pprint
     p = Pdbpipe('E:/Downloads/1.py')
-    print(p.breakpoint('E:/Downloads/1.py', 9))
-    print(p.breakpoint('E:/Downloads/1.py', 9))
+    print(p.breakpoint('E:/Downloads/1.py', 12))
+    p.continues()
+    print(p.pprint('t'))

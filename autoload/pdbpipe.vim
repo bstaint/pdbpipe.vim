@@ -61,3 +61,12 @@ fun! pdbpipe#run(op) abort
         call pdbpipe#quit()
     endif
 endfunction
+
+fun! pdbpipe#print(word)
+    if (!s:enable_startup() || a:word == '') | return | endif
+
+    let line = pyxeval('pipe.pprint("'.a:word.'")')
+    echom line
+endfunction
+
+" TODO: show cursor variable type __dict__
