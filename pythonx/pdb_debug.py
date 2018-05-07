@@ -56,12 +56,25 @@ class PdbDebug(object):
                 return bp[1]
         return 0
 
-
     def breakpoint(self, file, line):
         bp = (normcase(normpath(file)).encode('utf-8'), line)
         line = self._check_point(bp)
         return bp if line > 0 else (file, line)
-
+        
+    def _pprint(self, var):
+        stdout,_ = self._pipe.execute(b'pp %s\n' % var)
+        return stdout[0].split(b'(Pdb) ')[1]
+        
+    def pprint(self, var):
+        var = var.encode('utf-8')
+        l = self._pprint(b"hasattr(%s, '__dict__')" % var)
+        # NameError or SyntaxError
+        if not l.startswith(b'*** '):
+            data = self._pprint(var + b'.__dict__' if l == b'True' else var)
+            type_ = self._pprint(b"type(%s)" % var)
+            return b'%s = %s %s' % (var, data, type_)
+        return ''
+        
 
 if __name__ == "__main__":
     p = PdbDebug("E:/Downloads/1.py")

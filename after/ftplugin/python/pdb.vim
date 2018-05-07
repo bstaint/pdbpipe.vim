@@ -29,3 +29,4 @@ if !hasmapto('<Plug>PdbPrintCword', 'n')
 	nmap <unique> <Leader>p <Plug>PdbPrintCword
 endif
 
+command -nargs=1 PdbPrint call pdb#print('<args>')

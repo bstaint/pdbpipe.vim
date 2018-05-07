@@ -65,7 +65,7 @@ endfunction
 
 fun! pdb#print(word)
     if (!s:enable_startup() || a:word == '') | return | endif
-
-    let line = pyxeval('pipe.pprint("'.a:word.'")')
-    echom line
+    let word = substitute(a:word, '"', '\\"', 'g')
+    let line = pyxeval('pipe.pprint("'.l:word.'")')
+    echom shellescape(line)
 endfunction
