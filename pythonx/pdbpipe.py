@@ -93,6 +93,9 @@ class Pdbpipe(object):
     def pprint(self, var : str) -> str:
         var_bytes = var.encode('utf-8')
         line = self._pprint(b"hasattr(%s, '__dict__')" % var_bytes)
+        # NameError or SyntaxError
+        if line.startswith(b'*** '): return ''
+        
         data = self._pprint(var_bytes + b'.__dict__' if line == b'True' else var_bytes)
         typ = self._pprint(b"type(%s)" % var_bytes)
         return (b'%s = %s %s' % (var_bytes, data, typ)).decode('utf-8')
