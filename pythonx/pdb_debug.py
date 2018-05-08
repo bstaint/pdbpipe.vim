@@ -42,11 +42,11 @@ class PdbDebug(object):
         return self._traceback(stdout, stderr)
 
     def _check_point(self, bp):
-        for i, param in enumerate(self._breakpoints):
-            if bp == param:
-                self._pipe.execute(b'clear %d\n' % (i+1))
-                del self._breakpoints[i]
-                return -i
+        if bp in self._breakpoints:
+            idx = self._breakpoints.index(bp)
+            self._pipe.execute(b'clear %d\n' % (idx+1))
+            self._breakpoints.pop(idx)
+            return -idx
 
         stdout,_ = self._pipe.execute(b'b %s:%d\n' % bp)
         if stdout[0] != b'(Pdb) *** Blank or comment':
@@ -72,7 +72,7 @@ class PdbDebug(object):
         if not l.startswith(b'*** '):
             data = self._pprint(var + b'.__dict__' if l == b'True' else var)
             type_ = self._pprint(b"type(%s)" % var)
-            return b'%s = %s %s' % (var, data, type_)
+            return b'%s %s = %s ' % (type_, var, data)
         return ''
         
 

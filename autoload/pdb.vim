@@ -1,4 +1,4 @@
-hi def link Breakpoint Error
+hi def link Breakpoint Todo
 sign define breakpoint linehl=Breakpoint  text=xx
 hi def link CurrentLine DiffAdd
 sign define current_line linehl=CurrentLine text=>>
@@ -41,7 +41,7 @@ fun! pdb#breakpoint() abort
         call add(s:breakpoints, s:signid)
         let s:signid += 1        
     else
-        let id = remove(s:breakpoints, lines[1])
+        let id = remove(s:breakpoints, abs(lines[1]))
         silent exe ":sign unplace ".id." file=".lines[0]
     endif
 endfunction
@@ -59,7 +59,7 @@ fun! pdb#run(op) abort
         silent exec 'normal! zz'
         exe ":sign place 111 line=".lines[1]." name=current_line file=" . lines[0]
     else
-				call pdb#quit()
+        call pdb#quit()
     endif
 endfunction
 
@@ -67,5 +67,5 @@ fun! pdb#print(word)
     if (!s:enable_startup() || a:word == '') | return | endif
     let word = substitute(a:word, '"', '\\"', 'g')
     let line = pyxeval('pipe.pprint("'.l:word.'")')
-    echom shellescape(line)
+    echom line
 endfunction
