@@ -10,7 +10,7 @@ class PdbDebug(object):
     RE_BREAKPOINT = re.compile(b'\(Pdb\)\sBreakpoint\s(\d{1,})\sat\s(.*?$)')
     RE_WHERE = re.compile(b'[>|\s]\s*([^\(].+)\((\d{1,})\)')
     STEP_TYPES = (b'c\n', b'n\n', b's\n')
-    
+
     def __init__(self, file):
         self._breakpoints = []
         self._pipe = Pipe(['python3', '-m', 'pdb', file])
@@ -21,9 +21,13 @@ class PdbDebug(object):
         file,line = self._parse_where(stdout[-2])
         return (file, line, stderr[-1])
 
-    def _parse_where(self, line : bytes):
-        r = self.RE_WHERE.search(line) 
-        return ('', 0) if not r else (r.group(1), r.group(2))
+    def _parse_where(self, line, trackback=b''):
+        r = self.RE_WHERE.search(line)
+        if r and not trackback:
+            return (r.group(1), r.group(2))
+        elif not trackback.endswith(b'--Return--'):
+            return (r.group(1), r.group(2), trackback[6:])
+        return ('', -2)
 
     def _where(self):
         ''' where command '''
@@ -37,10 +41,9 @@ class PdbDebug(object):
         ''' idx in [ 0 : continue, 1 : next, 2 : step ] '''
         stdout,stderr = self._pipe.execute(self.STEP_TYPES[idx])
         if len(stdout) == 3:  # Error
-            return self._parse_where(stdout[1]) + (stdout[0][6:],)
+            return self._parse_where(stdout[1], stdout[0])
         elif not stderr:
             return self._where()
-
         return self._traceback(stdout, stderr)
 
     def _check_point(self, bp):
@@ -82,4 +85,6 @@ if __name__ == "__main__":
     p = PdbDebug("E:/Downloads/1.py")
     p.breakpoint("E:/Downloads/1.py", 2)
     p.step(0)
-    print(p.step(2))
+    print(p.step(1))
+    print(p.step(1))
+    print(p.step(1))

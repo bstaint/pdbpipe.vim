@@ -49,11 +49,11 @@ endfunction
 fun! pdb#run(op) abort
     if !s:enable_startup() | return | endif
     let lines = pyxeval('pipe.step('.a:op.')')
-    if lines[0] != "" && lines[1] > 0
-        if get(lines, 2, "") != ""
-            exec ":echohl WarningMsg | echom '".lines[2]."' | echohl None"
-        endif
+    if get(lines, 2, "") != ""
+        exec ":redraws! | echohl ErrorMsg | echom '".lines[2]."' | echohl None"
+    endif
         
+    if lines[0] != "" && lines[1] > 0
         sign unplace 111
         silent exec ":drop ".lines[0]." | normal ".lines[1]."G"
         silent exec 'normal! zz'
