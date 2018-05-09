@@ -18,9 +18,9 @@ fun! s:enable_startup()
 endfunction
 
 fun! pdb#quit() abort
-		sign unplace *
-		pyx del pipe
-		pyx pipe = None
+    sign unplace *
+    pyx del pipe
+    pyx pipe = None
 endfunction
 
 fun! pdb#toggle() abort

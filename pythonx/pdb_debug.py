@@ -36,7 +36,9 @@ class PdbDebug(object):
     def step(self, idx):
         ''' idx in [ 0 : continue, 1 : next, 2 : step ] '''
         stdout,stderr = self._pipe.execute(self.STEP_TYPES[idx])
-        if not stderr:
+        if len(stdout) == 3:  # Error
+            return self._parse_where(stdout[1]) + (stdout[0][6:],)
+        elif not stderr:
             return self._where()
 
         return self._traceback(stdout, stderr)
@@ -78,7 +80,6 @@ class PdbDebug(object):
 
 if __name__ == "__main__":
     p = PdbDebug("E:/Downloads/1.py")
-    p.breakpoint("E:/Downloads/1.py", 6)
+    p.breakpoint("E:/Downloads/1.py", 2)
     p.step(0)
-    for i in range(10):
-        print(p.step(2))
+    print(p.step(2))
