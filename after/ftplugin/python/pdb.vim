@@ -26,7 +26,7 @@ if !hasmapto('<Plug>PdbRun', 'n')
 endif
 
 if !hasmapto('<Plug>PdbPrintCword', 'n')
-	nmap <unique> <Leader><Enter> <Plug>PdbPrintCword
+	nmap <unique> <Enter> <Plug>PdbPrintCword
 endif
 
 command! -nargs=1 PdbPrint call pdb#print('<args>')

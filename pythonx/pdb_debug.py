@@ -23,10 +23,11 @@ class PdbDebug(object):
 
     def _parse_where(self, line, trackback=b''):
         r = self.RE_WHERE.search(line)
-        if r and not trackback:
-            return (r.group(1), r.group(2))
-        elif not trackback.endswith(b'--Return--'):
-            return (r.group(1), r.group(2), trackback[6:])
+        if r is not None:
+            if not trackback or trackback.endswith(b'--Call--'):
+                return (r.group(1), r.group(2))
+            elif not trackback.endswith(b'--Return--'):
+                return (r.group(1), r.group(2), trackback[6:])
         return ('', -2)
 
     def _where(self):
@@ -40,7 +41,7 @@ class PdbDebug(object):
     def step(self, idx):
         ''' idx in [ 0 : continue, 1 : next, 2 : step ] '''
         stdout,stderr = self._pipe.execute(self.STEP_TYPES[idx])
-        if len(stdout) == 3:  # Error
+        if len(stdout) == 3:  # Return, Call, Error
             return self._parse_where(stdout[1], stdout[0])
         elif not stderr:
             return self._where()
@@ -65,11 +66,11 @@ class PdbDebug(object):
         bp = (normcase(normpath(file)).encode('utf-8'), line)
         line = self._check_point(bp)
         return bp if line > 0 else (file, line)
-        
+
     def _pprint(self, var):
         stdout,_ = self._pipe.execute(b'pp %s\n' % var)
         return stdout[0].split(b'(Pdb) ')[1]
-        
+
     def pprint(self, var):
         var = var.encode('utf-8')
         l = self._pprint(b"hasattr(%s, '__dict__')" % var)
@@ -79,12 +80,11 @@ class PdbDebug(object):
             type_ = self._pprint(b"type(%s)" % var)
             return b'%s %s = %s ' % (type_, var, data)
         return ''
-        
 
 if __name__ == "__main__":
     p = PdbDebug("E:/Downloads/1.py")
-    p.breakpoint("E:/Downloads/1.py", 2)
+    p.breakpoint("E:/Downloads/1.py", 10)
     p.step(0)
-    print(p.step(1))
-    print(p.step(1))
-    print(p.step(1))
+    print(p.step(2))
+    print(p.step(2))
+    print(p.step(2))
