@@ -8,44 +8,14 @@ import pprint
 class PdbDebug(object):
 
     RE_BREAKPOINT = re.compile(b'\(Pdb\)\sBreakpoint\s(\d{1,})\sat\s(.*?$)')
-    RE_WHERE = re.compile(b'[>|\s]\s*([^\(].+)\((\d{1,})\)')
-    STEP_TYPES = (b'c\n', b'n\n', b's\n')
+    RE_WHERE = re.compile(b'[\s|>]\s(.*?)\((\d{1,})\)<module')
+    STEP_CMD = (b'c\n', b'n\n', b's\n')
 
     def __init__(self, file):
         self._breakpoints = []
         self._pipe = Pipe(['python3', '-m', 'pdb', file])
         # clean when process startup
         self._pipe.output()
-
-    def _traceback(self, stdout, stderr):
-        file,line = self._parse_where(stdout[-2])
-        return (file, line, stderr[-1])
-
-    def _parse_where(self, line, trackback=b''):
-        r = self.RE_WHERE.search(line)
-        if r is not None:
-            if not trackback or trackback.endswith(b'--Call--'):
-                return (r.group(1), r.group(2))
-            elif not trackback.endswith(b'--Return--'):
-                return (r.group(1), r.group(2), trackback[6:])
-        return ('', -2)
-
-    def _where(self):
-        ''' where command '''
-        stdout,_ = self._pipe.execute(b'w\n')
-        if len(stdout) > 3:
-            idx = 3 if stdout[-1].startswith(b'> <frozen') else -2
-            return self._parse_where(stdout[idx])
-        return ('', -2)
-
-    def step(self, idx):
-        ''' idx in [ 0 : continue, 1 : next, 2 : step ] '''
-        stdout,stderr = self._pipe.execute(self.STEP_TYPES[idx])
-        if len(stdout) == 3:  # Return, Call, Error
-            return self._parse_where(stdout[1], stdout[0])
-        elif not stderr:
-            return self._where()
-        return self._traceback(stdout, stderr)
 
     def _check_point(self, bp):
         if bp in self._breakpoints:
@@ -67,6 +37,38 @@ class PdbDebug(object):
         line = self._check_point(bp)
         return bp if line > 0 else (file, line)
 
+    def _trackback(self, stdout, stderr):
+        file,line = self._parse_where(stdout[-2])
+        return (file, line, stderr[-1])
+
+    def _parse_where(self, line):
+        r = self.RE_WHERE.search(line)
+        return (r.group(1), r.group(2) ) if r else None
+
+    def _where(self, stdout):
+        flag,line = stdout[0],stdout[0]
+        if len(stdout) >= 3:
+            line = stdout[-2]
+
+        postion = self._parse_where(line)
+        if postion is None:
+            stdout,_ = self._pipe.execute(b'w\n')
+            # TODO: list index out of range
+            postion = self._parse_where(stdout[3])
+
+        return postion if postion else ('', -2)
+
+    def step(self, cmd):
+        '''
+        param cmd 0: continue
+                  1: next
+                  2: step
+        '''
+        stdout,stderr = self._pipe.execute(self.STEP_CMD[cmd])
+        if not stderr:
+            return self._where(stdout)
+        return self._trackback(stdout, stderr)
+
     def _pprint(self, var):
         stdout,_ = self._pipe.execute(b'pp %s\n' % var)
         return stdout[0].split(b'(Pdb) ')[1]
@@ -81,10 +83,12 @@ class PdbDebug(object):
             return b'%s %s = %s ' % (type_, var, data)
         return ''
 
+
 if __name__ == "__main__":
     p = PdbDebug("E:/Downloads/1.py")
-    p.breakpoint("E:/Downloads/1.py", 10)
+    p.breakpoint("E:/Downloads/1.py", 13)
     p.step(0)
-    print(p.step(2))
-    print(p.step(2))
-    print(p.step(2))
+    print(p.step(1))
+    print(p.step(1))
+    print(p.step(1))
+    print(p.step(1))
